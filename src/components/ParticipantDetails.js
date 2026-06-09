@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import axios from "axios"
 import { Users, Mail, Phone, GraduationCap, Building, Calendar, ArrowLeft, User, Star } from "lucide-react"
-
+const API_BASE = process.env.REACT_APP_API_URL;
 const EnhancedParticipantDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -54,7 +54,7 @@ const EnhancedParticipantDetails = () => {
           return
         }
 
-        const res = await axios.get(`http://localhost:8000/api/participants/${id}/`, {
+         const res = await axios.get(`${API_BASE}/api/participants/${id}/`, {  // ✅ updated
           headers: {
             Authorization: `Bearer ${token}`,
           },
