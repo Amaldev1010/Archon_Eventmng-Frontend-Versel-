@@ -5,6 +5,8 @@ import axios from "axios"
 import { useNavigate } from "react-router-dom"
 import { Calendar, Clock, MapPin, Users, LogOut, UserX, CheckCircle, XCircle, Sparkles, Zap } from "lucide-react"
 
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000"
+
 const EnhancedEventsPage = () => {
   const [events, setEvents] = useState([])
   const [registeredEvents, setRegisteredEvents] = useState([])
@@ -15,7 +17,6 @@ const EnhancedEventsPage = () => {
   const navigate = useNavigate()
   const accessToken = localStorage.getItem("access_token")
 
-  // Enhanced mouse parallax effect
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (containerRef.current) {
@@ -52,12 +53,13 @@ const EnhancedEventsPage = () => {
 
     const headers = { Authorization: `Bearer ${accessToken}` }
 
-    axios.get("http://localhost:8000/api/user/", { headers }).catch(() => navigate("/"))
+    // FIX 1: removed unused `response` variable — just fire-and-forget the user check
+    axios.get(`${API_BASE}/api/user/`, { headers }).catch(() => navigate("/"))
 
     axios
-      .get("http://localhost:8000/api/events/", { headers })
-      .then((response) => {
-        setEvents(response.data)
+      .get(`${API_BASE}/api/events/`, { headers })
+      .then((res) => {
+        setEvents(res.data)
         setIsLoading(false)
       })
       .catch((error) => {
@@ -67,10 +69,9 @@ const EnhancedEventsPage = () => {
       })
 
     axios
-      .get("http://localhost:8000/api/events/registered/", { headers })
-      .then((response) => {
-        // Expecting response.data as [{ id, registered_at }]
-        setRegisteredEvents(response.data)
+      .get(`${API_BASE}/api/events/registered/`, { headers })
+      .then((res) => {
+        setRegisteredEvents(res.data)
       })
       .catch((error) => console.error("Error fetching registered events:", error))
   }, [accessToken, navigate])
@@ -83,7 +84,7 @@ const EnhancedEventsPage = () => {
 
   const handleDeleteAccount = () => {
     axios
-      .delete("http://localhost:8000/api/delete-account/", {
+      .delete(`${API_BASE}/api/delete-account/`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then(() => {
@@ -96,8 +97,8 @@ const EnhancedEventsPage = () => {
 
   const handleRegister = async (eventId) => {
     try {
-      const response = await axios.post(
-        `http://localhost:8000/api/events/${eventId}/register/`,
+      await axios.post(
+        `${API_BASE}/api/events/${eventId}/register/`,
         {},
         {
           headers: {
@@ -107,10 +108,9 @@ const EnhancedEventsPage = () => {
         },
       )
       alert("✅ Registered successfully! A confirmation email has been sent.")
-      // Add the new registration with current timestamp as fallback
       setRegisteredEvents((prev) => [
         ...prev,
-        { id: eventId, registered_at: new Date().toISOString() }
+        { id: eventId, registered_at: new Date().toISOString() },
       ])
     } catch (error) {
       if (error.response) {
@@ -129,10 +129,8 @@ const EnhancedEventsPage = () => {
 
   const handleCancel = async (eventId) => {
     try {
-      await axios.delete(`http://localhost:8000/api/events/${eventId}/cancel/`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+      await axios.delete(`${API_BASE}/api/events/${eventId}/cancel/`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
       })
       alert("❌ Registration cancelled. A cancellation email has been sent.")
       setRegisteredEvents((prev) => prev.filter((reg) => reg.id !== eventId))
@@ -142,29 +140,18 @@ const EnhancedEventsPage = () => {
     }
   }
 
-  // Function to check if cancel button should be shown based on registration date
   const canCancelEvent = (registeredAt) => {
     try {
       const currentDate = new Date()
       const regDateTime = new Date(registeredAt)
 
-      // Log for debugging
-      console.log("Current Date:", currentDate.toISOString())
-      console.log("Registration Date:", registeredAt, regDateTime.toISOString())
-
-      // Check if registration date is valid
       if (isNaN(regDateTime.getTime())) {
         console.error("Invalid registration date:", registeredAt)
         return false
       }
 
-      // Calculate the difference in days
       const timeDiff = currentDate.getTime() - regDateTime.getTime()
       const daysDiff = timeDiff / (1000 * 3600 * 24)
-
-      console.log("Days since registration:", daysDiff)
-
-      // Allow cancellation if registration is less than 2 days old
       return daysDiff < 2
     } catch (error) {
       console.error("Error in canCancelEvent:", error.message)
@@ -310,13 +297,13 @@ const EnhancedEventsPage = () => {
       display: "flex",
       gap: "16px",
     },
+    // FIX 2: duplicate `border` key removed — kept only the border with value
     button: {
       display: "flex",
       alignItems: "center",
       gap: "10px",
       padding: "14px 24px",
       borderRadius: "16px",
-      border: "none",
       cursor: "pointer",
       fontWeight: "600",
       transition: "all 0.3s ease",
@@ -628,110 +615,50 @@ const EnhancedEventsPage = () => {
       <style>
         {`
           @keyframes auroraFloat {
-            0%, 100% { 
-              transform: translateY(0px) rotate(0deg) scale(1); 
-              opacity: 0.8;
-            }
-            25% { 
-              transform: translateY(-50px) rotate(90deg) scale(1.3); 
-              opacity: 1;
-            }
-            50% { 
-              transform: translateY(-25px) rotate(180deg) scale(0.9); 
-              opacity: 0.7;
-            }
-            75% { 
-              transform: translateY(-40px) rotate(270deg) scale(1.2); 
-              opacity: 0.9;
-            }
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); opacity: 0.8; }
+            25% { transform: translateY(-50px) rotate(90deg) scale(1.3); opacity: 1; }
+            50% { transform: translateY(-25px) rotate(180deg) scale(0.9); opacity: 0.7; }
+            75% { transform: translateY(-40px) rotate(270deg) scale(1.2); opacity: 0.9; }
           }
-          
           @keyframes auroraMorph {
-            0%, 100% { 
-              transform: translateY(0px) rotate(0deg) scale(1);
-              border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-              opacity: 0.7;
-            }
-            20% { 
-              transform: translateY(-25px) rotate(72deg) scale(1.15);
-              border-radius: 58% 42% 75% 25% / 76% 46% 54% 24%;
-              opacity: 0.9;
-            }
-            40% { 
-              transform: translateY(-40px) rotate(144deg) scale(0.95);
-              border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%;
-              opacity: 1;
-            }
-            60% { 
-              transform: translateY(-30px) rotate(216deg) scale(1.2);
-              border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%;
-              opacity: 0.8;
-            }
-            80% { 
-              transform: translateY(-20px) rotate(288deg) scale(1.1);
-              border-radius: 45% 55% 40% 60% / 50% 35% 65% 50%;
-              opacity: 0.95;
-            }
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; opacity: 0.7; }
+            20% { transform: translateY(-25px) rotate(72deg) scale(1.15); border-radius: 58% 42% 75% 25% / 76% 46% 54% 24%; opacity: 0.9; }
+            40% { transform: translateY(-40px) rotate(144deg) scale(0.95); border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%; opacity: 1; }
+            60% { transform: translateY(-30px) rotate(216deg) scale(1.2); border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%; opacity: 0.8; }
+            80% { transform: translateY(-20px) rotate(288deg) scale(1.1); border-radius: 45% 55% 40% 60% / 50% 35% 65% 50%; opacity: 0.95; }
           }
-          
           @keyframes gradientShift {
-            0%, 100% { 
-              background-position: 0% 50%; 
-            }
-            50% { 
-              background-position: 100% 50%; 
-            }
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
           }
-          
           @keyframes fadeInUp {
-            from { 
-              opacity: 0; 
-              transform: translateY(50px); 
-            }
-            to { 
-              opacity: 1; 
-              transform: translateY(0); 
-            }
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
           }
-          
           @keyframes slideUpScale {
-            from { 
-              opacity: 0; 
-              transform: translateY(80px) scale(0.8); 
-            }
-            to { 
-              opacity: 1; 
-              transform: translateY(0) scale(1); 
-            }
+            from { opacity: 0; transform: translateY(80px) scale(0.8); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
           }
-          
           @keyframes pulse {
             0%, 100% { opacity: 0.6; }
             50% { opacity: 1; }
           }
-          
           .event-card:hover {
             transform: translateY(-12px) scale(1.02);
             box-shadow: 0 25px 60px rgba(139, 92, 246, 0.15), 0 0 60px rgba(139, 92, 246, 0.1);
           }
-          
           .action-button:hover {
             transform: translateY(-3px) scale(1.05);
             box-shadow: 0 15px 40px rgba(139, 92, 246, 0.25);
           }
-          
           .header-button:hover {
             transform: translateY(-2px);
-            background: linear-gradient(135deg, 
-              rgba(255, 255, 255, 0.95) 0%, 
-              rgba(248, 250, 252, 0.8) 100%
-            );
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.8) 100%);
             box-shadow: 0 10px 30px rgba(139, 92, 246, 0.15);
           }
         `}
       </style>
 
-      {/* Aurora Floating Elements */}
       <div style={styles.floatingElement1}></div>
       <div style={styles.floatingElement2}></div>
       <div style={styles.floatingElement3}></div>
@@ -761,7 +688,6 @@ const EnhancedEventsPage = () => {
           </div>
         </div>
 
-        {/* Available Events */}
         <div style={styles.card}>
           <div style={styles.cardHeader}>
             <div style={styles.cardIcon}>
@@ -855,7 +781,6 @@ const EnhancedEventsPage = () => {
           )}
         </div>
 
-        {/* Registered Events */}
         <div style={styles.card}>
           <div style={styles.cardHeader}>
             <div style={styles.cardIcon}>
