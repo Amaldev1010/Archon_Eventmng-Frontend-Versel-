@@ -7,7 +7,7 @@ import {
   LogIn, UserPlus, Eye, EyeOff, Sparkles, Star, ArrowRight,
 } from "lucide-react"
 
-const API_BASE = process.env.REACT_APP_API_URL 
+const API_BASE = process.env.REACT_APP_API_URL;
 
 function EnhancedAuthPage() {
   const navigate = useNavigate()
