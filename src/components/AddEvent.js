@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { Calendar, Clock, MapPin, Edit3, Trash2, Users, LogOut, UserX, Plus, Sparkles, Zap, Send } from "lucide-react"
 
@@ -53,59 +53,62 @@ function EnhancedAddEvent() {
       window.removeEventListener("scroll", handleScroll)
     }
   }, [])
-
+//changes applied
   useEffect(() => {
-    const fetchUserAndEvents = async () => {
-      try {
-        const res = await fetch("http://localhost:8000/api/user/", {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        })
-
-        if (res.ok) {
-          const user = await res.json()
-          if (user.role !== "coordinator") {
-            alert("Access denied. Only coordinators can add events.")
-            navigate("/")
-            return
-          }
-
-          setEventData((prev) => ({ ...prev, coordinator: user.id }))
-          fetchMyEvents()
-        } else {
-          navigate("/")
-        }
-      } catch (err) {
-        console.error(err)
-        alert("Failed to fetch user details")
-      }
-    }
-
-    fetchUserAndEvents()
-  }, [accessToken, navigate])
-
-  const fetchMyEvents = async () => {
+  const fetchUserAndEvents = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/events/my-events/", {
-        headers: { Authorization: `Bearer ${accessToken}` },
+      const res = await fetch("http://localhost:8000/api/user/", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       })
 
       if (res.ok) {
-        const data = await res.json()
-        setMyEvents(data)
-        const initialMessages = data.reduce((acc, event) => ({
-          ...acc,
-          [event.id]: "",
-        }), {})
-        setMessages(initialMessages)
+        const user = await res.json()
+
+        if (user.role !== "coordinator") {
+          alert("Access denied. Only coordinators can add events.")
+          navigate("/")
+          return
+        }
+
+        setEventData((prev) => ({ ...prev, coordinator: user.id }))
+        fetchMyEvents()
       } else {
-        console.error("Failed to fetch events")
+        navigate("/")
       }
     } catch (err) {
       console.error(err)
+      alert("Failed to fetch user details")
     }
   }
+
+  fetchUserAndEvents()
+}, [accessToken, navigate, fetchMyEvents])
+// change applied
+ const fetchMyEvents = useCallback(async () => {
+  try {
+    const res = await fetch("http://localhost:8000/api/events/my-events/", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      setMyEvents(data)
+
+      const initialMessages = data.reduce((acc, event) => {
+        acc[event.id] = ""
+        return acc
+      }, {})
+
+      setMessages(initialMessages)
+    } else {
+      console.error("Failed to fetch events")
+    }
+  } catch (err) {
+    console.error(err)
+  }
+}, [accessToken])
 
   const handleChange = (e) => {
     setEventData({ ...eventData, [e.target.name]: e.target.value })
