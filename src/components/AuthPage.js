@@ -85,7 +85,7 @@ function EnhancedAuthPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/api/token/`, {
+      const res = await fetch(`${API_BASE}/api/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
