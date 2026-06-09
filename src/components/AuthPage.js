@@ -19,6 +19,8 @@ import {
   ArrowRight,
 } from "lucide-react"
 
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000"
+
 function EnhancedAuthPage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState("login")
@@ -91,7 +93,7 @@ function EnhancedAuthPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const res = await fetch("http://localhost:8000/api/register/", {
+      const res = await fetch("API_BASE", {  //changed
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(registerData),
@@ -125,7 +127,7 @@ function EnhancedAuthPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const res = await fetch("http://localhost:8000/api/login/", {
+      const res = await fetch("API_BASE", { //changed
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(loginData),
@@ -136,7 +138,7 @@ function EnhancedAuthPage() {
         localStorage.setItem("access_token", data.access)
         localStorage.setItem("refresh_token", data.refresh)
 
-        const userRes = await fetch("http://localhost:8000/api/user/", {
+        const userRes = await fetch("API_BASE", {  //changed
           method: "GET",
           headers: {
             Authorization: `Bearer ${data.access}`,
