@@ -26,7 +26,7 @@ function Register() {
     try {
       const registerRes = await axios.post(`${API_BASE}/api/register/`, formData); // ✅ backticks
       if (registerRes.status === 200 || registerRes.status === 201) {
-        const loginRes = await axios.post(`${API_BASE}/api/token/`, {            // ✅ backticks + correct endpoint
+        const loginRes = await axios.post(`${API_BASE}/api/login/`, {            // ✅ backticks + correct endpoint
           username: formData.username,
           password: formData.password,
         });
