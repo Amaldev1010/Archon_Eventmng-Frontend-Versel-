@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios'; // ✅ was missing
 
 const API_BASE = process.env.REACT_APP_API_URL;
 
@@ -10,7 +11,6 @@ function Register() {
     password: '',
     role: 'participant',
   });
-
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -19,27 +19,27 @@ function Register() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
+    if (!API_BASE) {
+      alert('API is not configured. Please contact support.');
+      return;
+    }
     try {
-      const registerRes = await axios.post('${API_BASE}/api/register/',formData); 
+      const registerRes = await axios.post(`${API_BASE}/api/register/`, formData); // ✅ backticks
       if (registerRes.status === 200 || registerRes.status === 201) {
-        // Automatically log in
-        const loginRes = await axios.post('${API_BASE}/api/login/', {
-            username: formData.username,
-            password: formData.password,
+        const loginRes = await axios.post(`${API_BASE}/api/token/`, {            // ✅ backticks + correct endpoint
+          username: formData.username,
+          password: formData.password,
         });
+        const loginData = loginRes.data;
+        localStorage.setItem('access_token', loginData.access);
+        localStorage.setItem('refresh_token', loginData.refresh);
 
-          const loginData = loginRes.data;
-          localStorage.setItem('access_token', loginData.access);
-          localStorage.setItem('refresh_token', loginData.refresh);
-
-          // Fetch role
-          const userRes = await axios.get(`${API_BASE}/api/user/`, {
+        const userRes = await axios.get(`${API_BASE}/api/user/`, {
           headers: {
             Authorization: `Bearer ${loginData.access}`,
           },
         });
-  const user = userRes.data;
+        const user = userRes.data;
         if (user.role === 'participant') {
           navigate('/events');
         } else {
@@ -48,16 +48,12 @@ function Register() {
       }
     } catch (err) {
       if (err.response) {
-        // Server responded with an error status
         alert('Error: ' + JSON.stringify(err.response.data));
       } else {
         alert('Error: ' + err.message);
       }
     }
   };
-
-          
-       
 
   return (
     <div>
