@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = process.env.REACT_APP_API_URL
+const API_BASE = process.env.REACT_APP_API_URL;
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -21,57 +21,43 @@ function Register() {
     e.preventDefault();
 
     try {
-      const registerRes = await fetch('http://localhost:8000/api/register/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-
-      if (registerRes.ok) {
+      const registerRes = await axios.post('${API_BASE}/api/register/',formData); 
+      if (registerRes.status === 200 || registerRes.status === 201) {
         // Automatically log in
-        const loginRes = await fetch('http://localhost:8000/api/login/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const loginRes = await axios.post('${API_BASE}/api/login/', {
             username: formData.username,
             password: formData.password,
-          }),
         });
 
-        if (loginRes.ok) {
-          const loginData = await loginRes.json();
+          const loginData = loginRes.data;
           localStorage.setItem('access_token', loginData.access);
           localStorage.setItem('refresh_token', loginData.refresh);
 
           // Fetch role
-          const userRes = await fetch('http://localhost:8000/api/user/', {
-            method: 'GET',
-            headers: {
-              Authorization: `Bearer ${loginData.access}`,
-            },
-          });
-
-          if (userRes.ok) {
-            const user = await userRes.json();
-            if (user.role === 'participant') {
-              navigate('/events');
-            } else {
-              navigate('/add_event');
-            }
-          } else {
-            alert('Failed to fetch user data');
-          }
+          const userRes = await axios.get(`${API_BASE}/api/user/`, {
+          headers: {
+            Authorization: `Bearer ${loginData.access}`,
+          },
+        });
+  const user = userRes.data;
+        if (user.role === 'participant') {
+          navigate('/events');
         } else {
-          alert('Login after registration failed');
+          navigate('/add_event');
         }
-      } else {
-        const error = await registerRes.json();
-        alert('Registration failed: ' + JSON.stringify(error));
       }
     } catch (err) {
-      alert('Error: ' + err.message);
+      if (err.response) {
+        // Server responded with an error status
+        alert('Error: ' + JSON.stringify(err.response.data));
+      } else {
+        alert('Error: ' + err.message);
+      }
     }
   };
+
+          
+       
 
   return (
     <div>
