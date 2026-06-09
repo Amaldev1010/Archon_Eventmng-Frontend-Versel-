@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { Calendar, Clock, MapPin, Edit3, Trash2, Users, LogOut, UserX, Plus, Sparkles, Zap, Send } from "lucide-react"
 
-const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:8000"
+const API_BASE = process.env.REACT_APP_API_URL 
 
 function EnhancedAddEvent() {
   const navigate = useNavigate()
