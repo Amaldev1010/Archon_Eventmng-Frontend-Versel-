@@ -53,6 +53,31 @@ function EnhancedAddEvent() {
       window.removeEventListener("scroll", handleScroll)
     }
   }, [])
+
+//changes applied
+  const fetchMyEvents = useCallback(async () => {
+  try {
+    const res = await fetch("http://localhost:8000/api/events/my-events/", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      setMyEvents(data)
+
+      const initialMessages = data.reduce((acc, event) => {
+        acc[event.id] = ""
+        return acc
+      }, {})
+
+      setMessages(initialMessages)
+    } else {
+      console.error("Failed to fetch events")
+    }
+  } catch (err) {
+    console.error(err)
+  }
+}, [accessToken])
 //changes applied
   useEffect(() => {
   const fetchUserAndEvents = async () => {
@@ -85,30 +110,7 @@ function EnhancedAddEvent() {
 
   fetchUserAndEvents()
 }, [accessToken, navigate, fetchMyEvents])
-// change applied
- const fetchMyEvents = useCallback(async () => {
-  try {
-    const res = await fetch("http://localhost:8000/api/events/my-events/", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-
-    if (res.ok) {
-      const data = await res.json()
-      setMyEvents(data)
-
-      const initialMessages = data.reduce((acc, event) => {
-        acc[event.id] = ""
-        return acc
-      }, {})
-
-      setMessages(initialMessages)
-    } else {
-      console.error("Failed to fetch events")
-    }
-  } catch (err) {
-    console.error(err)
-  }
-}, [accessToken])
+ 
 
   const handleChange = (e) => {
     setEventData({ ...eventData, [e.target.name]: e.target.value })
